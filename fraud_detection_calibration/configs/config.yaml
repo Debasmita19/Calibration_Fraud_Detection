@@ -1,0 +1,88 @@
+# ============================================================
+# Global experiment configuration
+# ============================================================
+
+data:
+  ieee_cis_path: "data/raw/ieee-fraud-detection"
+  creditcard_path: "data/raw/creditcardfraud"
+  processed_path: "data/processed"
+  synthetic_path: "data/synthetic"
+  random_seed: 42
+
+splits:
+  # Temporal split boundaries (for IEEE-CIS TransactionDT)
+  # TransactionDT is in seconds from a reference point
+  train_frac: 0.6
+  calibration_frac: 0.15
+  val_frac: 0.10
+  test_frac: 0.15
+
+models:
+  xgboost:
+    n_estimators: 500
+    max_depth: 8
+    learning_rate: 0.05
+    scale_pos_weight: auto  # will be computed from class ratio
+    eval_metric: "aucpr"
+    early_stopping_rounds: 50
+
+  lightgbm:
+    n_estimators: 500
+    max_depth: 8
+    learning_rate: 0.05
+    is_unbalance: true
+    metric: "average_precision"
+    early_stopping_rounds: 50
+
+  mlp:
+    hidden_dims: [256, 128, 64]
+    dropout: 0.3
+    learning_rate: 0.001
+    batch_size: 2048
+    epochs: 100
+    early_stopping_patience: 10
+    weight_decay: 0.0001
+
+calibration:
+  methods:
+    - "temperature_scaling"
+    - "platt_scaling"
+    - "isotonic_regression"
+    - "beta_calibration"
+    - "histogram_binning"
+  n_bins_ece: 15
+  conformal_alpha: 0.10  # 90% coverage
+
+evaluation:
+  metrics:
+    classification: ["auroc", "auprc", "f1", "precision", "recall"]
+    calibration: ["ece", "mce", "brier_score", "log_loss"]
+    business: ["expected_fraud_loss", "review_cost", "customer_friction"]
+
+  decision_thresholds:
+    auto_approve_max: 0.10
+    step_up_auth_max: 0.50
+    manual_review_max: 0.85
+    # above manual_review_max -> auto_block
+
+  costs:
+    avg_transaction_amount: 150.0
+    fraud_loss_multiplier: 1.0
+    step_up_auth_cost: 0.50
+    manual_review_cost: 5.00
+    false_positive_cost: 2.00  # customer friction cost
+
+shifts:
+  temporal:
+    # number of time windows for sliding evaluation
+    n_windows: 5
+  synthetic:
+    feature_drift_magnitude: 0.3
+    new_fraud_fraction: 0.05
+    label_noise_rate: 0.02
+
+experiment:
+  results_dir: "results"
+  seed: 42
+  n_bootstrap: 1000  # for confidence intervals
+  device: "cuda"  # or "cpu"
