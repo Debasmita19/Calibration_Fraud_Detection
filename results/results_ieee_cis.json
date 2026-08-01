@@ -1,0 +1,124 @@
+{
+  "xgboost": {
+    "uncalibrated": {
+      "ece": 0.11517800545277376,
+      "mce": 0.5581048261090584,
+      "brier_score": 0.05255034267730976,
+      "nll": 0.20265993343308367,
+      "auroc": 0.8559575576090738,
+      "auprc": 0.4841521205123888
+    },
+    "temperature_scaling": {
+      "ece": 0.0624827823904826,
+      "mce": 0.6676710611509244,
+      "brier_score": 0.04662784654462426,
+      "nll": 0.1787997751272187
+    },
+    "platt_scaling": {
+      "ece": 0.011358426734939043,
+      "mce": 0.25077842029439174,
+      "brier_score": 0.024131239126815796,
+      "nll": 0.1032507372433618
+    },
+    "isotonic_regression": {
+      "ece": 0.006629538317292295,
+      "mce": 0.1901848555630089,
+      "brier_score": 0.02333375118853631,
+      "nll": NaN
+    },
+    "beta_calibration": {
+      "ece": 0.005052742406005325,
+      "mce": 0.13041487380662523,
+      "brier_score": 0.023219249357190802,
+      "nll": 0.10338260698657259
+    },
+    "histogram_binning": {
+      "ece": 0.0065160118559608035,
+      "mce": 0.124473227159626,
+      "brier_score": 0.02342503190784307,
+      "nll": 0.10153296277123244
+    },
+    "conformal": {
+      "empirical_coverage": 0.9033427032885156,
+      "target_coverage": 0.9,
+      "avg_set_size": 0.9403596708097673,
+      "frac_empty": 0.05964032919023267,
+      "frac_singleton": 0.9403596708097673,
+      "frac_both": 0.0
+    },
+    "cost_aware_conformal": {
+      "empirical_coverage": 0.9049570449644958,
+      "target_coverage": 0.9,
+      "avg_set_size": 0.9194070963299127,
+      "frac_empty": 0.08059290367008727,
+      "frac_singleton": 0.9194070963299127,
+      "frac_both": 0.0
+    },
+    "policy_comparison": {
+      "best_calibrator": "beta_calibration",
+      "cost_reduction": -23925.0,
+      "cost_reduction_pct": -45.3808290892537
+    }
+  },
+  "lightgbm": {
+    "uncalibrated": {
+      "ece": 0.17456584277616413,
+      "mce": 0.6052554221813802,
+      "brier_score": 0.07593485927232625,
+      "nll": 0.2722500561592237,
+      "auroc": 0.8822429884701312,
+      "auprc": 0.4987447413643032
+    },
+    "temperature_scaling": {
+      "ece": 0.11152686458101094,
+      "mce": 0.7170907179018557,
+      "brier_score": 0.0687818900609688,
+      "nll": 0.2391753956779253
+    },
+    "platt_scaling": {
+      "ece": 0.012887399032142897,
+      "mce": 0.20364189455741538,
+      "brier_score": 0.024289755056886807,
+      "nll": 0.10103817120817912
+    },
+    "isotonic_regression": {
+      "ece": 0.005428689365484763,
+      "mce": 0.09805901016822655,
+      "brier_score": 0.023118089516044407,
+      "nll": 0.09832855839643316
+    },
+    "beta_calibration": {
+      "ece": 0.005729704021554005,
+      "mce": 0.0894009707761142,
+      "brier_score": 0.023121848636719802,
+      "nll": 0.09785315057934758
+    },
+    "histogram_binning": {
+      "ece": 0.0051995679100658,
+      "mce": 0.07596664218482221,
+      "brier_score": 0.023293556367173823,
+      "nll": 0.09825028570912062
+    },
+    "conformal": {
+      "empirical_coverage": 0.8963999051715379,
+      "target_coverage": 0.9,
+      "avg_set_size": 0.9802779377067317,
+      "frac_empty": 0.019722062293268307,
+      "frac_singleton": 0.9802779377067317,
+      "frac_both": 0.0
+    },
+    "cost_aware_conformal": {
+      "empirical_coverage": 0.8996963231392736,
+      "target_coverage": 0.9,
+      "avg_set_size": 0.9136609430916336,
+      "frac_empty": 0.08633905690836635,
+      "frac_singleton": 0.9136609430916336,
+      "frac_both": 0.0
+    },
+    "policy_comparison": {
+      "best_calibrator": "histogram_binning",
+      "cost_reduction": -21357.5,
+      "cost_reduction_pct": -43.6553359360628
+    }
+  }
+}

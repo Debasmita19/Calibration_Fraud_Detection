@@ -46,23 +46,10 @@ def run_pipeline(config_path: str, dataset_name: str = "creditcard"):
     print(f"Loading dataset: {dataset_name}")
     print("=" * 60)
 
-    X, y = get_dataset(dataset_name)
+    X, y, splits = get_dataset(dataset_name)
     print(f"Dataset shape: {X.shape}, Fraud rate: {y.mean():.4f}")
 
-    # ---- Step 2: Temporal split ----
-    print("\nCreating temporal splits...")
-    if dataset_name == "creditcard":
-        df_raw = pd.read_csv(
-            Path(config["data"]["creditcard_path"]) / "creditcard.csv"
-        )
-        splits = temporal_split_creditcard(df_raw)
-    else:
-        df_raw = pd.read_csv(
-            Path(config["data"]["ieee_cis_path"]) / "train_transaction.csv"
-        )
-        from src.data.splits import temporal_split_ieee_cis
-        splits = temporal_split_ieee_cis(df_raw)
-
+  
     X_train = X.iloc[splits["train"]].values if hasattr(X, "iloc") else X[splits["train"]]
     y_train = y[splits["train"]]
     X_cal = X.iloc[splits["calibration"]].values if hasattr(X, "iloc") else X[splits["calibration"]]
