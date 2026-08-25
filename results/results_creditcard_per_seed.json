@@ -1,0 +1,140 @@
+{
+  "42": {
+    "xgboost": {
+      "uncalibrated": {
+        "ece": 0.0004000077889974718,
+        "adaptive_ece": 0.00022717137501669285,
+        "mce": 0.7642072439193726,
+        "brier_score": 0.0004165731530298243,
+        "nll": 0.003562314593623746,
+        "auroc": 0.9545460691171963,
+        "auprc": 0.7641260302910432
+      },
+      "temperature_scaling": {
+        "ece": 0.0002508095807415148,
+        "adaptive_ece": 0.0001625779032604484,
+        "mce": 0.8981481906763591,
+        "brier_score": 0.00040820145065139615,
+        "nll": 0.0028252927064858335
+      },
+      "platt_scaling": {
+        "ece": 0.00024182681568684698,
+        "adaptive_ece": 0.00030498656095507014,
+        "mce": 0.916535985314171,
+        "brier_score": 0.00042901781596416924,
+        "nll": 0.003350855282827539
+      },
+      "isotonic_regression": {
+        "ece": 0.0002655748912589826,
+        "adaptive_ece": 0.0002309824175004587,
+        "mce": 0.6905032992362976,
+        "brier_score": 0.0004143872493076851,
+        "nll": 0.0038708071264035296
+      },
+      "beta_calibration": {
+        "ece": 0.00024337261627330469,
+        "adaptive_ece": 0.00017134021755041323,
+        "mce": 0.7001868326977302,
+        "brier_score": 0.0004048921635052655,
+        "nll": 0.002813847002991253
+      },
+      "histogram_binning": {
+        "ece": 0.00020289644212181446,
+        "adaptive_ece": 0.00039925336233193395,
+        "mce": 0.3333333134651184,
+        "brier_score": 0.00041473282602332235,
+        "nll": 0.004647475537069433
+      },
+      "conformal": {
+        "empirical_coverage": 0.9235990824399607,
+        "target_coverage": 0.9,
+        "avg_set_size": 0.9237629324469828,
+        "frac_empty": 0.07623706755301718,
+        "frac_singleton": 0.9237629324469828,
+        "frac_both": 0.0
+      },
+      "cost_aware_conformal": {
+        "empirical_coverage": 0.9235990824399607,
+        "target_coverage": 0.9,
+        "avg_set_size": 0.9237629324469828,
+        "frac_empty": 0.07623706755301718,
+        "frac_singleton": 0.9237629324469828,
+        "frac_both": 0.0
+      },
+      "policy_comparison": {
+        "best_calibrator": "histogram_binning",
+        "cost_reduction": -144.0,
+        "cost_reduction_pct": -7.3319755600814664
+      }
+    }
+  },
+  "43": {
+    "xgboost": {
+      "uncalibrated": {
+        "ece": 0.0004282527398321037,
+        "adaptive_ece": 0.00020839347339630604,
+        "mce": 0.6475558280944824,
+        "brier_score": 0.0004247949172002969,
+        "nll": 0.003554547118403223,
+        "auroc": 0.9660989526058661,
+        "auprc": 0.7609494745295815
+      },
+      "temperature_scaling": {
+        "ece": 0.0002773611693335261,
+        "adaptive_ece": 0.00021940380744787997,
+        "mce": 0.6105505010534212,
+        "brier_score": 0.00041486742248702797,
+        "nll": 0.0028277755474384668
+      },
+      "platt_scaling": {
+        "ece": 0.00021200693605710064,
+        "adaptive_ece": 0.0004047950540623861,
+        "mce": 0.5739199401143483,
+        "brier_score": 0.0004222219328129965,
+        "nll": 0.0032678112686244935
+      },
+      "isotonic_regression": {
+        "ece": 0.00028846021429540096,
+        "adaptive_ece": 0.00018081710742192693,
+        "mce": 0.5714285969734192,
+        "brier_score": 0.0004376070444570233,
+        "nll": 0.005089634579851989
+      },
+      "beta_calibration": {
+        "ece": 0.00027575849389357374,
+        "adaptive_ece": 0.00021277892130727258,
+        "mce": 0.8057211167589167,
+        "brier_score": 0.00041157632045992333,
+        "nll": 0.002816853517801818
+      },
+      "histogram_binning": {
+        "ece": 0.00024738481449790187,
+        "adaptive_ece": 0.0003922168836253809,
+        "mce": 0.6333333253860474,
+        "brier_score": 0.00044088066936008265,
+        "nll": 0.005534066746266875
+      },
+      "conformal": {
+        "empirical_coverage": 0.9218903609381583,
+        "target_coverage": 0.9,
+        "avg_set_size": 0.9220308038013202,
+        "frac_empty": 0.07796919619867984,
+        "frac_singleton": 0.9220308038013202,
+        "frac_both": 0.0
+      },
+      "cost_aware_conformal": {
+        "empirical_coverage": 0.9218903609381583,
+        "target_coverage": 0.9,
+        "avg_set_size": 0.9220308038013202,
+        "frac_empty": 0.07796919619867984,
+        "frac_singleton": 0.9220308038013202,
+        "frac_both": 0.0
+      },
+      "policy_comparison": {
+        "best_calibrator": "platt_scaling",
+        "cost_reduction": -147.5,
+        "cost_reduction_pct": -7.519755289319398
+      }
+    }
+  }
+}

@@ -22,6 +22,10 @@ models:
     n_estimators: 500
     max_depth: 8
     learning_rate: 0.05
+    # Subsampling makes training stochastic (so seeds produce genuine
+    # variance for error bars) and regularizes against overfitting.
+    subsample: 0.8
+    colsample_bytree: 0.8
     scale_pos_weight: auto  # will be computed from class ratio
     eval_metric: "aucpr"
     early_stopping_rounds: 50
@@ -30,6 +34,9 @@ models:
     n_estimators: 500
     max_depth: 8
     learning_rate: 0.05
+    subsample: 0.8
+    subsample_freq: 1
+    colsample_bytree: 0.8
     is_unbalance: true
     metric: "average_precision"
     early_stopping_rounds: 50
@@ -84,5 +91,6 @@ shifts:
 experiment:
   results_dir: "results"
   seed: 42
+  seeds: [42, 43, 44, 45, 46]  # multi-seed runs for mean/std error bars
   n_bootstrap: 1000  # for confidence intervals
   device: "cuda"  # or "cpu"

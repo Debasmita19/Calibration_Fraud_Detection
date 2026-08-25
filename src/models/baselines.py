@@ -51,7 +51,6 @@ class XGBoostFraud(BaseModel):
 
         self.model = self._xgb.XGBClassifier(
             n_estimators=n_estimators,
-            use_label_encoder=False,
             **params,
         )
 

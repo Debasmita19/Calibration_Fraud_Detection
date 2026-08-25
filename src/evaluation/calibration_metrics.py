@@ -38,6 +38,43 @@ def expected_calibration_error(
     return ece
 
 
+def adaptive_expected_calibration_error(
+    probs: np.ndarray, y_true: np.ndarray, n_bins: int = 15
+) -> float:
+    """
+    Adaptive ECE with equal-mass (equal-count) bins.
+
+    Standard ECE uses equal-width bins, which are unstable under extreme
+    class imbalance: nearly all fraud predictions sit near 0, leaving most
+    bins empty. Equal-mass binning puts the same number of samples in every
+    bin (quantile bin edges), so each bin's accuracy/confidence estimate is
+    statistically stable. Recommended alongside standard ECE (Nixon et al.,
+    2019, "Measuring Calibration in Deep Learning").
+    """
+    n = len(y_true)
+    if n == 0:
+        return 0.0
+
+    order = np.argsort(probs)
+    sorted_probs = probs[order]
+    sorted_y = y_true[order]
+
+    # Equal-count bin boundaries over the sorted predictions.
+    bin_assignments = np.floor(np.arange(n) * n_bins / n).astype(int)
+
+    ece = 0.0
+    for b in range(n_bins):
+        mask = bin_assignments == b
+        n_bin = mask.sum()
+        if n_bin == 0:
+            continue
+        avg_confidence = sorted_probs[mask].mean()
+        avg_accuracy = sorted_y[mask].mean()
+        ece += (n_bin / n) * abs(avg_accuracy - avg_confidence)
+
+    return ece
+
+
 def maximum_calibration_error(
     probs: np.ndarray, y_true: np.ndarray, n_bins: int = 15
 ) -> float:
@@ -68,7 +105,11 @@ def brier_score(probs: np.ndarray, y_true: np.ndarray) -> float:
 
 def negative_log_likelihood(probs: np.ndarray, y_true: np.ndarray) -> float:
     """Negative log-likelihood (cross-entropy loss)."""
-    probs_clipped = np.clip(probs, 1e-10, 1 - 1e-10)
+    # Cast to float64 BEFORE clipping: in float32, 1 - 1e-10 rounds to
+    # exactly 1.0, so log(1 - p) becomes log(0) = -inf for confident
+    # predictions (models like XGBoost emit float32).
+    probs64 = np.asarray(probs, dtype=np.float64)
+    probs_clipped = np.clip(probs64, 1e-10, 1 - 1e-10)
     return -np.mean(
         y_true * np.log(probs_clipped)
         + (1 - y_true) * np.log(1 - probs_clipped)
@@ -123,6 +164,7 @@ def compute_all_calibration_metrics(
     """Compute all calibration metrics in one call."""
     return {
         "ece": expected_calibration_error(probs, y_true, n_bins),
+        "adaptive_ece": adaptive_expected_calibration_error(probs, y_true, n_bins),
         "mce": maximum_calibration_error(probs, y_true, n_bins),
         "brier_score": brier_score(probs, y_true),
         "nll": negative_log_likelihood(probs, y_true),

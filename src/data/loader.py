@@ -12,18 +12,34 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 def load_ieee_cis(
     data_dir: str = "data/raw/ieee-fraud-detection",
+    cache_dir: str = "data/processed",
+    use_cache: bool = True,
 ) -> pd.DataFrame:
     """
     Load and merge IEEE-CIS transaction + identity tables.
 
+    The merged table (~650MB of CSV parsing + a join) is cached to parquet on
+    first load; later loads take seconds instead of minutes. Pass
+    use_cache=False to force a rebuild (e.g., after changing the merge logic).
+
     Returns a single DataFrame with all features and the isFraud target.
     """
+    cache_path = Path(cache_dir) / "ieee_cis_raw.parquet"
+
+    if use_cache and cache_path.exists():
+        return pd.read_parquet(cache_path)
+
     data_path = Path(data_dir)
 
     train_txn = pd.read_csv(data_path / "train_transaction.csv")
     train_id = pd.read_csv(data_path / "train_identity.csv")
 
     df = train_txn.merge(train_id, on="TransactionID", how="left")
+
+    if use_cache:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        df.to_parquet(cache_path, index=False)
+
     return df
 
 
@@ -33,6 +49,49 @@ def load_creditcard(
     """Load the European credit card fraud dataset."""
     data_path = Path(data_dir)
     df = pd.read_csv(data_path / "creditcard.csv")
+    return df
+
+
+BAF_VARIANTS = ["Base", "Variant I", "Variant II", "Variant III", "Variant IV", "Variant V"]
+
+
+def load_baf(
+    variant: str = "Base",
+    data_dir: str = "data/raw/baf",
+    cache_dir: str = "data/processed",
+    use_cache: bool = True,
+) -> pd.DataFrame:
+    """
+    Load one variant of the Bank Account Fraud (BAF) suite (NeurIPS 2022).
+
+    BAF is realistic synthetic data generated from a real bank-account-opening
+    fraud dataset. Each variant has ~1M rows, a `month` column (0-7) for
+    temporal experiments, and `fraud_bool` as the target. The 6 variants have
+    deliberately different distributions, enabling controlled domain-shift
+    experiments (train on Base, test on a variant).
+    """
+    if variant not in BAF_VARIANTS:
+        raise ValueError(f"Unknown BAF variant: {variant}. Choose from {BAF_VARIANTS}")
+
+    cache_name = f"baf_{variant.lower().replace(' ', '_')}.parquet"
+    cache_path = Path(cache_dir) / cache_name
+
+    if use_cache and cache_path.exists():
+        return pd.read_parquet(cache_path)
+
+    csv_path = Path(data_dir) / f"{variant}.csv"
+    if not csv_path.exists():
+        raise FileNotFoundError(
+            f"{csv_path} not found. Download with: kaggle datasets download "
+            f"-d sgpjesus/bank-account-fraud-dataset-neurips-2022 "
+            f"-p data/raw/baf --unzip"
+        )
+    df = pd.read_csv(csv_path)
+
+    if use_cache:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        df.to_parquet(cache_path, index=False)
+
     return df
 
 
@@ -101,27 +160,85 @@ def preprocess_creditcard(
     return X, y
 
 
+def preprocess_baf(
+    df: pd.DataFrame,
+    train_idx: np.ndarray,
+) -> Tuple[pd.DataFrame, np.ndarray]:
+    """
+    Preprocess a BAF variant:
+    - Label-encode categoricals with categories fitted on train rows only
+      (unseen categories at test time map to a missing token).
+    - Keep `month` out of the feature matrix (it is the temporal axis, not
+      a predictor).
+    """
+    target = "fraud_bool"
+    y = df[target].values
+
+    X = df.drop(columns=[target, "month"]).copy()
+
+    cat_cols = X.select_dtypes(include=["object"]).columns.tolist()
+    for col in cat_cols:
+        X[col] = X[col].fillna("_missing_").astype(str)
+        train_categories = set(X[col].iloc[train_idx].unique())
+        X[col] = X[col].where(X[col].isin(train_categories), "_missing_")
+        le = LabelEncoder()
+        le.fit(pd.concat([X[col].iloc[train_idx], pd.Series(["_missing_"])]))
+        X[col] = le.transform(X[col])
+
+    return X, y
+
+
 def get_dataset(
-    name: str, data_dir: str = "data/raw"
-) -> Tuple[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]]:
+    name: str, data_dir: str = "data/raw", return_meta: bool = False
+):
     """
     Load raw data, compute temporal splits, then preprocess with
     statistics fitted on the train partition only.
 
+    Args:
+        return_meta: if True, additionally return a dict with per-row
+            'sample_ids' and raw (unscaled) 'time_values' for the
+            per-sample prediction store.
+
     Returns:
-        (X, y, splits) tuple
+        (X, y, splits) or (X, y, splits, meta)
     """
     from src.data.splits import temporal_split_creditcard, temporal_split_ieee_cis
+
+    from src.data.splits import temporal_split_baf
 
     if name == "ieee_cis":
         df = load_ieee_cis(f"{data_dir}/ieee-fraud-detection")
         splits = temporal_split_ieee_cis(df)
+        meta = {
+            "sample_ids": df["TransactionID"].values,
+            "time_values": df["TransactionDT"].values.astype(float),
+        }
         X, y, _, _ = preprocess_ieee_cis(df, train_idx=splits["train"])
     elif name == "creditcard":
         df = load_creditcard(f"{data_dir}/creditcardfraud")
         splits = temporal_split_creditcard(df)
+        meta = {
+            "sample_ids": df.index.values,
+            "time_values": df["Time"].values.astype(float),
+        }
         X, y = preprocess_creditcard(df, train_idx=splits["train"])
+    elif name.startswith("baf"):
+        # "baf" -> Base variant; "baf_variant_i" ... "baf_variant_v" for others.
+        suffix = name[len("baf"):].strip("_")
+        variant = "Base" if not suffix else "Variant " + suffix.split("_")[-1].upper()
+        df = load_baf(variant, f"{data_dir}/baf")
+        splits = temporal_split_baf(df)
+        meta = {
+            "sample_ids": df.index.values,
+            "time_values": df["month"].values.astype(float),
+        }
+        X, y = preprocess_baf(df, train_idx=splits["train"])
     else:
-        raise ValueError(f"Unknown dataset: {name}. Use 'ieee_cis' or 'creditcard'.")
+        raise ValueError(
+            f"Unknown dataset: {name}. Use 'ieee_cis', 'creditcard', or 'baf'."
+        )
 
+    if return_meta:
+        return X, y, splits, meta
     return X, y, splits

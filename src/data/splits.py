@@ -73,6 +73,39 @@ def temporal_split_creditcard(
     }
 
 
+def temporal_split_baf(
+    df: pd.DataFrame,
+    train_months: Tuple[int, ...] = (0, 1, 2, 3),
+    cal_months: Tuple[int, ...] = (4,),
+    val_months: Tuple[int, ...] = (5,),
+    test_months: Tuple[int, ...] = (6, 7),
+) -> Dict[str, np.ndarray]:
+    """
+    Split a BAF variant by its explicit `month` column (0-7).
+
+    Unlike fraction-based splits, these are semantic calendar boundaries:
+    the model trains on months 0-3 and is tested on months 6-7, so test
+    metrics measure genuine month-scale temporal drift.
+    """
+    month = df["month"].values
+
+    def idx_for(months):
+        return np.where(np.isin(month, months))[0]
+
+    splits = {
+        "train": idx_for(train_months),
+        "calibration": idx_for(cal_months),
+        "val": idx_for(val_months),
+        "test": idx_for(test_months),
+    }
+
+    all_assigned = np.concatenate(list(splits.values()))
+    assert len(np.unique(all_assigned)) == len(all_assigned), (
+        "Split month groups must not overlap"
+    )
+    return splits
+
+
 def sliding_window_splits(
     time_values: np.ndarray,
     n_windows: int = 5,
