@@ -51,6 +51,7 @@ class XGBoostFraud(BaseModel):
 
         self.model = self._xgb.XGBClassifier(
             n_estimators=n_estimators,
+            early_stopping_rounds=early_stopping if X_val is not None else None,
             **params,
         )
 
