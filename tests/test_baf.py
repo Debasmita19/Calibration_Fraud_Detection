@@ -50,14 +50,14 @@ class TestTemporalSplitBAF:
 class TestPreprocessBAF:
     def test_month_and_target_excluded_from_features(self, baf_like_df):
         splits = temporal_split_baf(baf_like_df)
-        X, y = preprocess_baf(baf_like_df, train_idx=splits["train"])
+        X, y, _ = preprocess_baf(baf_like_df, train_idx=splits["train"])
         assert "month" not in X.columns
         assert "fraud_bool" not in X.columns
         assert len(y) == len(baf_like_df)
 
     def test_categoricals_are_numeric_after_encoding(self, baf_like_df):
         splits = temporal_split_baf(baf_like_df)
-        X, _ = preprocess_baf(baf_like_df, train_idx=splits["train"])
+        X, _, _ = preprocess_baf(baf_like_df, train_idx=splits["train"])
         assert X.select_dtypes(include=["object"]).empty
 
     def test_unseen_test_category_maps_to_missing_token(self, baf_like_df):
@@ -67,6 +67,6 @@ class TestPreprocessBAF:
         test_rows = df.index[df["month"] >= 6][:50]
         df.loc[test_rows, "device_os"] = "brand_new_os"
         splits = temporal_split_baf(df)
-        X, _ = preprocess_baf(df, train_idx=splits["train"])
+        X, _, _ = preprocess_baf(df, train_idx=splits["train"])
         assert X.select_dtypes(include=["object"]).empty
         assert np.isfinite(X["device_os"].values).all()

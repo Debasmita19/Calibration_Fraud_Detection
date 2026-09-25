@@ -160,33 +160,41 @@ def preprocess_creditcard(
     return X, y
 
 
-def preprocess_baf(
-    df: pd.DataFrame,
-    train_idx: np.ndarray,
-) -> Tuple[pd.DataFrame, np.ndarray]:
+def preprocess_baf(df, train_idx=None, encoders=None):
     """
-    Preprocess a BAF variant:
-    - Label-encode categoricals with categories fitted on train rows only
-      (unseen categories at test time map to a missing token).
-    - Keep `month` out of the feature matrix (it is the temporal axis, not
-      a predictor).
+    Preprocess a BAF variant.
+
+    Fit mode (encoders=None): requires train_idx; label-encoders are fitted
+    on train rows only. Apply mode (encoders given): reuses encoders fitted
+    on another dataframe (e.g., Base), so all variants share one encoding.
+    Categories unseen at fit time map to "_missing_". The `month` column is
+    the temporal axis, not a predictor, so it is excluded from features.
+
+    Returns (X, y, encoders).
     """
     target = "fraud_bool"
     y = df[target].values
-
     X = df.drop(columns=[target, "month"]).copy()
-
     cat_cols = X.select_dtypes(include=["object"]).columns.tolist()
+
+    fit_mode = encoders is None
+    if fit_mode:
+        if train_idx is None:
+            raise ValueError("train_idx is required when fitting encoders")
+        encoders = {}
+
     for col in cat_cols:
         X[col] = X[col].fillna("_missing_").astype(str)
-        train_categories = set(X[col].iloc[train_idx].unique())
+        if fit_mode:
+            train_categories = set(X[col].iloc[train_idx].unique())
+            le = LabelEncoder()
+            le.fit(pd.concat([X[col].iloc[train_idx], pd.Series(["_missing_"])]))
+            encoders[col] = (le, train_categories)
+        le, train_categories = encoders[col]
         X[col] = X[col].where(X[col].isin(train_categories), "_missing_")
-        le = LabelEncoder()
-        le.fit(pd.concat([X[col].iloc[train_idx], pd.Series(["_missing_"])]))
         X[col] = le.transform(X[col])
 
-    return X, y
-
+    return X, y, encoders
 
 def get_dataset(
     name: str, data_dir: str = "data/raw", return_meta: bool = False
@@ -233,7 +241,7 @@ def get_dataset(
             "sample_ids": df.index.values,
             "time_values": df["month"].values.astype(float),
         }
-        X, y = preprocess_baf(df, train_idx=splits["train"])
+        X, y, _ = preprocess_baf(df, train_idx=splits["train"])
     else:
         raise ValueError(
             f"Unknown dataset: {name}. Use 'ieee_cis', 'creditcard', or 'baf'."
