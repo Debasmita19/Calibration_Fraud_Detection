@@ -99,8 +99,9 @@ class BetaCalibration(CalibratorBase):
         self.lr = LogisticRegression(C=1e10, solver="lbfgs", max_iter=10000)
 
     def _features(self, probs: np.ndarray) -> np.ndarray:
-        probs_clipped = np.clip(probs, 1e-10, 1 - 1e-10)
-        log_odds = np.log(probs_clipped / (1 - probs_clipped))
+        probs64 = np.asarray(probs, dtype=np.float64)
+        probs_clipped = np.clip(probs64, 1e-10, 1.0 - 1e-10)
+        log_odds = np.log(probs_clipped / (1.0 - probs_clipped))
         log_probs = np.log(probs_clipped)
         return np.column_stack([log_odds, log_probs])
 
