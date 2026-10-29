@@ -107,6 +107,7 @@ def list_available_runs(store_dir: str = DEFAULT_STORE_DIR) -> pd.DataFrame:
         for f in sorted(store.glob("*_seed*.parquet")):
             stem = f.stem  # {dataset}_{model}_seed{seed}
             base, _, seed_part = stem.rpartition("_seed")
-            dataset, _, model = base.partition("_")
+            # Dataset names may contain underscores (ieee_cis); model names don't.
+            dataset, _, model = base.rpartition("_")
             rows.append({"dataset": dataset, "model": model, "seed": int(seed_part)})
     return pd.DataFrame(rows, columns=["dataset", "model", "seed"])

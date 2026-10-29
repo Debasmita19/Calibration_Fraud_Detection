@@ -62,3 +62,16 @@ def test_list_available_runs(toy_run):
     assert runs.iloc[0]["dataset"] == "toyset"
     assert runs.iloc[0]["model"] == "xgboost"
     assert runs.iloc[0]["seed"] == 0
+
+
+def test_list_available_runs_dataset_with_underscore(tmp_path):
+    save_predictions(
+        dataset="ieee_cis", model="lightgbm", seed=43,
+        sample_ids=np.arange(4), time_values=np.arange(4, dtype=float),
+        y_true=np.array([0, 1, 0, 1]), y_prob=np.array([0.1, 0.9, 0.2, 0.8]),
+        splits={"test": np.arange(4)}, store_dir=str(tmp_path),
+    )
+    runs = list_available_runs(store_dir=str(tmp_path))
+    assert runs.iloc[0]["dataset"] == "ieee_cis"
+    assert runs.iloc[0]["model"] == "lightgbm"
+    assert runs.iloc[0]["seed"] == 43
