@@ -76,8 +76,10 @@ evaluation:
     avg_transaction_amount: 150.0
     fraud_loss_multiplier: 1.0
     step_up_auth_cost: 0.50
+    step_up_catch_rate: 0.70     # share of fraud stopped by OTP/3DS
     manual_review_cost: 5.00
-    false_positive_cost: 2.00  # customer friction cost
+    review_catch_rate: 0.95      # share of fraud stopped by an analyst
+    false_positive_cost: 20.00   # customer friction from blocking a legit transaction # customer friction cost
 
 shifts:
   temporal:

@@ -61,9 +61,19 @@ def compute_business_metrics(
     auto_block = probs >= thresholds["manual_review_max"]
 
     # Fraud losses: fraud that was auto-approved
+    # Fraud losses: approved fraud is lost in full; step-up and review stop
+# only a fraction of the fraud routed to them.
+    step_up_catch = costs.get("step_up_catch_rate", 1.0)
+    review_catch = costs.get("review_catch_rate", 1.0)
+    fraud_value = amounts * y_true
     fraud_approved = y_true[auto_approve].sum()
-    fraud_loss = (amounts[auto_approve] * y_true[auto_approve]).sum()
+    fraud_loss = (
+        fraud_value[auto_approve].sum()
+        + (1 - step_up_catch) * fraud_value[step_up].sum()
+        + (1 - review_catch) * fraud_value[manual_review].sum()
+    )
     fraud_loss *= costs["fraud_loss_multiplier"]
+    
 
     # Operational costs
     step_up_cost = step_up.sum() * costs["step_up_auth_cost"]
